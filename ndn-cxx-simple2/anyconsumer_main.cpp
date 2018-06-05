@@ -39,10 +39,10 @@ main(int argc, char** argv)
   // express interest
   if (m_latency > 0)
   {
-    m_instance->scheduleEvent_ExpressInterest_withLatency(m_interestPrefix, ndn::time::seconds(0), m_latency);
+    m_instance->scheduleEvent_ExpressInterest_withLatency(m_interestPrefix, 0, m_latency);
   }
   else
-    m_instance->scheduleEvent_ExpressInterest(m_interestPrefix, ndn::time::seconds(0));
+    m_instance->scheduleEvent_ExpressInterest(m_interestPrefix, 0);
 
   m_instance->run();
 

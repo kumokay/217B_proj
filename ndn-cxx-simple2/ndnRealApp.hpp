@@ -24,6 +24,8 @@
 #include <ndn-cxx/face.hpp>
 #include <ndn-cxx/interest.hpp>
 #include <ndn-cxx/security/key-chain.hpp>
+#include <ndn-cxx/security/pib/identity.hpp>
+#include <ndn-cxx/security/validator-null.hpp>
 #include <ndn-cxx/util/scheduler.hpp>
 #include <ndn-cxx/encoding/estimator.hpp>
 #include <boost/filesystem/fstream.hpp>
@@ -172,8 +174,13 @@ public:
     m_faceProducer.setInterestFilter(
       interestFilter,
       onInterest_funct,
-      std::bind([this, interestFilter](){ APP_LOG(DEBUG, "RegisterPrefixSuccessCallback: " << interestFilter); }),
-      std::bind([this, interestFilter](){ __STAT_LOG_EVENT(INTEREST, IN, interestFilter, "RegisterPrefixFailure"); APP_LOG(DEBUG, "RegisterPrefixFailureCallback: " << interestFilter); })
+      std::bind([this, interestFilter](){
+          APP_LOG(DEBUG, "RegisterPrefixSuccessCallback: " << interestFilter);
+      }),
+      std::bind([this, interestFilter](){
+          __STAT_LOG_EVENT(INTEREST, IN, interestFilter, "RegisterPrefixFailure");
+          APP_LOG(DEBUG, "RegisterPrefixFailureCallback: " << interestFilter);
+      })
     );
   }
 
@@ -202,8 +209,14 @@ public:
                m_faceConsumer.expressInterest(
                  interest,
                  onData_funct,
-                 std::bind([this, name](){ __STAT_LOG_EVENT(INTEREST, OUT, name, "Nack"); APP_LOG(DEBUG, "NackCallback: " << name); }),
-                 std::bind([this, name](){ __STAT_LOG_EVENT(INTEREST, OUT, name, "Timeout"); APP_LOG(DEBUG, "TimeoutCallback: " << name); })
+                 std::bind([this, name](){
+                    __STAT_LOG_EVENT(INTEREST, OUT, name, "Nack");
+                    APP_LOG(DEBUG, "NackCallback: " << name);
+                 }),
+                 std::bind([this, name](){
+                   __STAT_LOG_EVENT(INTEREST, OUT, name, "Timeout");
+                   APP_LOG(DEBUG, "TimeoutCallback: " << name);
+                 })
                );
         }
     );
@@ -243,8 +256,6 @@ public:
     scheduleEvent_ExpressInterest(new_name, after_ms, std::bind(&CLASSNAME::onData, this, _1, _2));
   }
 
-
-
   void
   processEvents()
   {
@@ -255,6 +266,40 @@ public:
   void run()
   {
     APP_LOG(DEBUG, "ndnRealApp::run(): nothing inside the function");
+  }
+
+  //////////// keychain related
+  void createIdentity(std::string identityNameStr)
+  {
+    // create a key pair and set it as the identity's default key
+    APP_LOG(DEBUG, "ndnRealApp::createIdentity():" << identityNameStr);
+    m_keyChain.createIdentity(ndn::Name(identityNameStr));
+  }
+
+  void setDefaultIdentity(std::string identityNameStr)
+  {
+
+    APP_LOG(DEBUG, "ndnRealApp::setDefaultIdentity(): old identity" << m_keyChain.getDefaultSigningInfo());
+    m_keyChain.setDefaultIdentity(m_keyChain.getPib().getIdentity(ndn::Name(identityNameStr)));
+    APP_LOG(DEBUG, "ndnRealApp::setDefaultIdentity(): new identity" << m_keyChain.getDefaultSigningInfo());
+  }
+
+  /*ndn::Key getIdentityKey(std::string identityNameStr)
+  {
+    return m_keyChain.getPib().getIdentity(ndn::Name(identityNameStr)).getDefaultKey();
+  }*/
+
+  void validateData(const ndn::Data& data)
+  {
+    m_validator.validate(
+      data,
+      std::bind([this, data](){
+         APP_LOG(DEBUG, " DataValidationSuccessCallback: " << data.getName());
+      }),
+      std::bind([this, data](){
+         APP_LOG(DEBUG, " DataValidationFailureCallback: " << data.getName());
+      })
+    );
   }
 
 protected:
@@ -272,6 +317,7 @@ protected:
     STAT_LOG_PKT(DATA, IN, data);
     APP_LOG(DEBUG, "ndnRealApp::onData_segment: interest=" << interest << ", data:");
     printData(data);
+    validateData(data);
 
     // try to get all segment, perform object recognition, and return a list of objects in the frame
     // interest: /Agent1/source/function1/0
@@ -327,6 +373,7 @@ protected:
         for (int i=0; i<(int)v_data.size(); i++)
           str_content.append(v_data[i]);
         std::shared_ptr<ndn::Data> new_data_ptr = createDataPacket(data_name, str_content, 1000);
+        m_keyChain.sign(*new_data_ptr);  // dummy signature
         APP_LOG(DEBUG, "ndnRealApp::onData_segment: send data back through callback_funct");
         callback_funct(interest, *new_data_ptr);
       }
@@ -339,14 +386,11 @@ protected:
   void
   sendData(ndn::Name dataName, std::string content, int freshPeriod_ms)
   {
-    std::shared_ptr<ndn::Data> data = createDataPacket(dataName, content, freshPeriod_ms);
-    m_keyChain.sign(*data);
-    m_faceProducer.put(*data);
-    STAT_LOG_PKT(DATA, OUT, *data);
+    sendData(dataName, content.c_str(), content.size(), 0, freshPeriod_ms);
   }
 
   void
-  sendData(ndn::Name dataName, char* content, int content_sz, int finalBlockId, int freshPeriod_ms)
+  sendData(ndn::Name dataName, const char* content, const int content_sz, int finalBlockId, int freshPeriod_ms)
   {
     std::shared_ptr<ndn::Data> data = createDataPacket(dataName, content, content_sz, finalBlockId, freshPeriod_ms);
     m_keyChain.sign(*data);
@@ -372,6 +416,7 @@ protected:
     APP_LOG(DEBUG, "\tName: " << data.getName().toUri() );
     APP_LOG(DEBUG, "\tFreshnessPeriod:" << data.getFreshnessPeriod());
     APP_LOG(DEBUG, "\tFinalBlockId: " << data.getFinalBlockId().toUri() );
+    APP_LOG(DEBUG, "\tKeyLocator: " << data.getSignature().getKeyLocator() );
     std::string str_content(data.getContent().value_begin(), data.getContent().value_end());
     if (is_print_content)
     {
@@ -399,6 +444,7 @@ protected:
     STAT_LOG_PKT(DATA, IN, data);
     APP_LOG(DEBUG, "ndnRealApp::onData: interest=" << interest << ", data:");
     printData_withContent(data);
+    validateData(data);
   }
 
 
@@ -415,35 +461,17 @@ private:
   std::shared_ptr<ndn::Data>
   createDataPacket(ndn::Name dataName, std::string content, int freshPeriod_ms)
   {
-    std::shared_ptr<ndn::Data> data = std::make_shared<ndn::Data>();
-    data->setName(dataName);
-    data->setFreshnessPeriod(ndn::time::milliseconds(freshPeriod_ms));
-    data->setContent(reinterpret_cast<const uint8_t*>(content.c_str()), content.size());
-
-    // Sign Data packet with default identity
-    m_keyChain.sign(*data);
-    // m_keyChain.sign(data, <identityName>);
-    // m_keyChain.sign(data, <certificate>);
-
-    // Return Data packet to the requester
-    return data;
+    return createDataPacket(dataName, content.c_str(), content.size(), 0, freshPeriod_ms);
   }
 
   std::shared_ptr<ndn::Data>
-  createDataPacket(ndn::Name dataName, char* content, int content_sz, int finalBlockId, int freshPeriod_ms)
+  createDataPacket(ndn::Name dataName, const char* content, const int content_sz, int finalBlockId, int freshPeriod_ms)
   {
     std::shared_ptr<ndn::Data> data = std::make_shared<ndn::Data>();
     data->setName(dataName);
     data->setFreshnessPeriod(ndn::time::milliseconds(freshPeriod_ms));
     data->setContent(reinterpret_cast<const uint8_t*>(content), content_sz);
     data->setFinalBlockId(ndn::Name::Component(std::to_string(finalBlockId)));
-
-    // Sign Data packet with default identity
-    m_keyChain.sign(*data);
-    // m_keyChain.sign(data, <identityName>);
-    // m_keyChain.sign(data, <certificate>);
-
-    // Return Data packet to the requester
     return data;
   }
 
@@ -460,6 +488,7 @@ private:
 protected:
   // boost::asio::io_service m_ioService;
   ndn::KeyChain& m_keyChain;
+  ndn::security::v2::ValidatorNull m_validator;
   std::string m_appId;
   bool m_log_on;
   int m_app_start_time;
@@ -470,7 +499,6 @@ protected:
   std::unordered_map<ndn::Name, std::vector<std::string>> m_segmentMap;  // data_name, content
   std::unordered_map<ndn::Name, ndn::DataCallback> m_segmentCallbackMap; // data_name, callback
 private:
-
   ndn::Face m_faceConsumer;
   ndn::Face m_faceProducer;
   ndn::Scheduler m_scheduler;

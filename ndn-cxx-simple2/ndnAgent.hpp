@@ -231,6 +231,7 @@ private:
     STAT_LOG_PKT(DATA, IN, data);
     APP_LOG(DEBUG, "onData: interest=" << interest << ", data:");
     printData(data);
+    validateData(data);
   }
 
   void
@@ -239,6 +240,7 @@ private:
     STAT_LOG_PKT(DATA, IN, data);
     APP_LOG(DEBUG, "onData_sourceName: interest=" << interest << ", data:");
     printData(data);
+    validateData(data);
     // interest: /source/function1/
     // data: /Agent2/source/function1/
     std::string str_content(data.getContent().value_begin(), data.getContent().value_end());
@@ -253,6 +255,7 @@ private:
     STAT_LOG_PKT(DATA, IN, data);
     APP_LOG(DEBUG, "onData_sourceContent: interest=" << interest << ", data:");
     printData(data);
+    //validateData(data); THIS IS NOT A READ ON_DATA FUNCTION SO DONT VERIFY
     APP_LOG(DEBUG, "onData_sourceContent: receive all segments");
     // got the whole file
     // save the file, chmod, and exec the file
@@ -326,7 +329,7 @@ private:
     std::string task_name = name.at(1).toUri();
     std::string content = "SimResponse to " + task_name;
 
-    // delay send dadta
+    // delay send data
     boost::this_thread::sleep_for(boost::chrono::milliseconds(m_exec_time));
     ndnRealApp::sendData(name, content, 10000);
   }

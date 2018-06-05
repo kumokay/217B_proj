@@ -46,10 +46,11 @@ public:
   initApp(std::string child_prefix)//, int child_number)
   {
     m_child_prefix = child_prefix;  // /UnderAgent1, /UnderAgent2 ,etc
-    //this->child_number = child_number;
-    //this->child_mask = 0;
-    //for(int i=0; i<child_number; ++i)
-    //  this->child_mask |= (1 << i);
+#if !(__IS_SIMULATION__)
+    ndnRealApp::createIdentity("/manager/keyAdmin");
+    ndnRealApp::createIdentity("/manager/dataAdmin");
+    ndnRealApp::setDefaultIdentity("/manager/dataAdmin");
+#endif
   }
 
   void

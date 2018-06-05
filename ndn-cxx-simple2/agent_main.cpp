@@ -12,13 +12,14 @@
 int
 main(int argc, char** argv)
 {
-  if (argc < 3)
+  if (argc < 4)
   {
-    std::cerr << "USAGE: ./agent_main AGENT_ID PARENT_ID" << std::endl;
+    std::cerr << "USAGE: ./agent_main AGENT_ID PARENT_ID EXEC_TIME" << std::endl;
     return 0;
   }
   std::string m_id = argv[1];
   std::string m_pid = argv[2];
+  int m_exec_time = std::stoi(argv[3]);
 
   std::string m_prefix = "/Agent" + m_id;
   std::string m_child_prefix = "/UnderAgent" + m_id;
@@ -30,7 +31,7 @@ main(int argc, char** argv)
   m_instance.reset(new app::INSTANCE_CLASS(m_app_id, keyChain));
   m_instance->setLogOn(m_is_log_on);
   m_instance->setNodeName(m_prefix);
-  m_instance->initApp(m_parent_prefix, m_child_prefix);//, m_child_number);
+  m_instance->initApp(m_parent_prefix, m_child_prefix, m_exec_time);//, m_child_number);
   m_instance->setInterestFilter(m_prefix);// + "/cmd_getData");
   m_instance->setInterestFilter("available");// + "/cmd_getData");
   m_instance->stat_logging_start("mylog/agent" + m_id + ".txt");

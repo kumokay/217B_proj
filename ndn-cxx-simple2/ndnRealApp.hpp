@@ -34,7 +34,7 @@
 #include <ratio>
 #include <chrono>
 
-#define __IS_SIMULATION__ 1
+#define __IS_SIMULATION__ cflag_is_simulation
 
 #if __IS_SIMULATION__
   #define GET_CHRONO_TIMESTAMP_MS(__delay_ms) \

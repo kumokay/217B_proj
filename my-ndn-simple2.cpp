@@ -34,7 +34,7 @@
 #include <time.h>
 
 NS_LOG_COMPONENT_DEFINE("my-ndn-simple2");
-// NS_LOG=my-ndn-simple2 ./waf --run=my-ndn-simple --vis
+// NS_LOG=my-ndn-simple2 ./waf --run=my-ndn-simple2 --vis
 
 namespace ns3 {
 
@@ -141,7 +141,7 @@ void AddAllRoute() {
 
 ndn::AppHelper _managerHelper("ndnAppStarterManager");
 ndn::AppHelper _agentHelper("ndnAppStarterAgent");
-ndn::AppHelper _consumerHelper("ndnAppStarterConsumer2");
+ndn::AppHelper _consumerHelper("ndnAppStarterConsumer");
 
 void
 installAgentApp(Ptr<Node> node,
@@ -274,7 +274,7 @@ main(int argc, char* argv[])
   // create node containers for routers and diff types of servers
   const int n_areas = 8; // 4 areas
   NodeContainer nc_routers[n_areas];
-  NodeContainer nc_servers_high[n_areas];
+  NodeContainer nc_servers_high[n_acdreas];
   NodeContainer nc_servers_mid[n_areas];
   NodeContainer nc_servers_low[n_areas];
   const int n_routers = 4;
@@ -313,7 +313,7 @@ main(int argc, char* argv[])
     for (int j=0; j<n_servers_high; j++)
     {
       installAgentApp(nc_servers_high[i].Get(j), manager_id, agent_id++, true, exec_time_servers_high);
-    }
+    }  // 0, 1
 
 
     nc_servers_mid[i].Create(n_servers_mid);
@@ -323,7 +323,7 @@ main(int argc, char* argv[])
     for (int j=0; j<n_servers_mid; j++)
     {
       installAgentApp(nc_servers_mid[i].Get(j), manager_id, agent_id++, true, exec_time_servers_mid);
-    }
+    }  // 2 ~ 9
 
     nc_servers_low[i].Create(n_servers_low);
     nc_nfd_noCache.Add(nc_servers_low[i]);
@@ -332,7 +332,7 @@ main(int argc, char* argv[])
     for (int j=0; j<n_servers_low; j++)
     {
       installAgentApp(nc_servers_low[i].Get(j), manager_id, agent_id++, true, exec_time_servers_low);
-    }
+    }  // 10, 11, 12, 13
   }
   NS_LOG_DEBUG("number of agents=" << agent_id);
 
@@ -349,7 +349,7 @@ main(int argc, char* argv[])
   nc_nfd_noCache.Add(nc_consumers);
   installConsumerApp(nc_consumers.Get(0));
   // connect manager and consumer
-  p2p_node.Install(nc_managers.Get(0), nc_routers[0].Get(0));
+  p2p_node.Install(nc_managers.Get(0), nc_routers[0].Get(0)); -
   p2p_node.Install(nc_consumers.Get(0), nc_routers[n_areas-1].Get(0));
 
   // Install NDN stack on all nodes after all nodes are connected (otherwise will fail)
@@ -372,9 +372,10 @@ main(int argc, char* argv[])
   AddAllOrigins(ndnGlobalRoutingHelper);
   // Choosing forwarding strategy
   AddAllRoute();
-  ndn::GlobalRoutingHelper::CalculateRoutes();
+  ndn::GlobalRoutingHelper
 
-  ndn::CsTracer::InstallAll("mylog/cs-trace.txt", MilliSeconds(100)); // sampling rate: every 0.1 second
+  int sampling_rate_ms = 100;  // every 0.1 second
+  ndn::CsTracer::InstallAll("mylog/cs-trace.txt", MilliSeconds(100));
   L2RateTracer::InstallAll("mylog/l2-drop-trace.txt", MilliSeconds(100));
   ndn::L3RateTracer::InstallAll("mylog/l3-rate-trace.txt", MilliSeconds(100));
   logNodeTables("mylog/Prefix2NodeMapping.txt");

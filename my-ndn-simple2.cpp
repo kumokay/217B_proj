@@ -27,7 +27,7 @@
 // applications
 #include "ndn-cxx-simple2/ndnAppStarterAgent.hpp"
 #include "ndn-cxx-simple2/ndnAppStarterManager.hpp"
-#include "ndn-cxx-simple2/ndnAppStarterConsumer2.hpp"
+#include "ndn-cxx-simple2/ndnAppStarterConsumer.hpp"
 
 // random number generator
 #include <stdlib.h>
@@ -35,6 +35,9 @@
 
 NS_LOG_COMPONENT_DEFINE("my-ndn-simple2");
 // NS_LOG=my-ndn-simple2 ./waf --run=my-ndn-simple2 --vis
+
+int cflag_is_simulation = 1;
+string log_folder = "src/ndnSIM/examples/my-ndn-simple2-log/";
 
 namespace ns3 {
 
@@ -274,7 +277,7 @@ main(int argc, char* argv[])
   // create node containers for routers and diff types of servers
   const int n_areas = 8; // 4 areas
   NodeContainer nc_routers[n_areas];
-  NodeContainer nc_servers_high[n_acdreas];
+  NodeContainer nc_servers_high[n_areas];
   NodeContainer nc_servers_mid[n_areas];
   NodeContainer nc_servers_low[n_areas];
   const int n_routers = 4;
@@ -349,7 +352,7 @@ main(int argc, char* argv[])
   nc_nfd_noCache.Add(nc_consumers);
   installConsumerApp(nc_consumers.Get(0));
   // connect manager and consumer
-  p2p_node.Install(nc_managers.Get(0), nc_routers[0].Get(0)); -
+  p2p_node.Install(nc_managers.Get(0), nc_routers[0].Get(0));
   p2p_node.Install(nc_consumers.Get(0), nc_routers[n_areas-1].Get(0));
 
   // Install NDN stack on all nodes after all nodes are connected (otherwise will fail)
@@ -372,14 +375,14 @@ main(int argc, char* argv[])
   AddAllOrigins(ndnGlobalRoutingHelper);
   // Choosing forwarding strategy
   AddAllRoute();
-  ndn::GlobalRoutingHelper
 
-  int sampling_rate_ms = 100;  // every 0.1 second
-  ndn::CsTracer::InstallAll("mylog/cs-trace.txt", MilliSeconds(100));
-  L2RateTracer::InstallAll("mylog/l2-drop-trace.txt", MilliSeconds(100));
-  ndn::L3RateTracer::InstallAll("mylog/l3-rate-trace.txt", MilliSeconds(100));
-  logNodeTables("mylog/Prefix2NodeMapping.txt");
-  ndn::AppDelayTracer::InstallAll("mylog/app-delays-trace.txt");
+  int sample_rate_ms = 100;  // every 0.1 second
+  NS_LOG_DEBUG("saving log to my-ndn-simple2-log/...");
+  ndn::CsTracer::InstallAll(log_folder + "cs-trace.txt", MilliSeconds(sample_rate_ms));
+  L2RateTracer::InstallAll(log_folder + "l2-drop-trace.txt", MilliSeconds(sample_rate_ms));
+  ndn::L3RateTracer::InstallAll(log_folder + "l3-rate-trace.txt", MilliSeconds(sample_rate_ms));
+  logNodeTables(log_folder + "Prefix2NodeMapping.txt");
+  ndn::AppDelayTracer::InstallAll(log_folder + "app-delays-trace.txt");
 
   Simulator::Stop(Seconds(33.0));
   NS_LOG_DEBUG("Simulator::Run");

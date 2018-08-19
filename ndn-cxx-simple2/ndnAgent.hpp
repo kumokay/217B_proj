@@ -337,7 +337,7 @@ private:
 
   std::string gen_taskFilePath(std::string task_name)
   {
-    return "/home/kumokay/github/ndnSIM/ns-3/src/ndnSIM/examples/ndn-cxx-simple2"
+    return "/home/kumokay/github/ndnSIM/ns-3/src/ndnSIM/examples/ndn-cxx-simple2/out"
         + m_nodeName + "." + task_name + ".out"; // Agent1.function1.out
   }
 

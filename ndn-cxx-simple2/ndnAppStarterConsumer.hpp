@@ -24,7 +24,6 @@
 
 #include "ns3/ndnSIM/helper/ndn-stack-helper.hpp"
 #include "ns3/application.h"
-#include "ndnSensorSetting.hpp"
 
 namespace ns3 {
 

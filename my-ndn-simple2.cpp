@@ -24,6 +24,11 @@
 #include "ns3/ndnSIM-module.h"
 #include "ns3/log.h"
 
+#define cflag_is_simulation 1
+NS_LOG_COMPONENT_DEFINE("my-ndn-simple2");
+// NS_LOG=my-ndn-simple2 ./waf --run=my-ndn-simple2 --vis
+string log_folder = "src/ndnSIM/examples/my-ndn-simple2-log/";
+
 // applications
 #include "ndn-cxx-simple2/ndnAppStarterAgent.hpp"
 #include "ndn-cxx-simple2/ndnAppStarterManager.hpp"
@@ -33,11 +38,7 @@
 #include <stdlib.h>
 #include <time.h>
 
-NS_LOG_COMPONENT_DEFINE("my-ndn-simple2");
-// NS_LOG=my-ndn-simple2 ./waf --run=my-ndn-simple2 --vis
 
-int cflag_is_simulation = 1;
-string log_folder = "src/ndnSIM/examples/my-ndn-simple2-log/";
 
 namespace ns3 {
 
@@ -241,6 +242,7 @@ main(int argc, char* argv[])
   std::srand (std::time(NULL));
 
   NS_LOG_DEBUG("start main");
+  NS_LOG_DEBUG("__IS_SIMULATION__=" << __IS_SIMULATION__);
   // setting default parameters for PointToPoint links and channels
   //Config::SetDefault("ns3::PointToPointNetDevice::DataRate", StringValue("400Mbps"));
   //Config::SetDefault("ns3::PointToPointChannel::Delay", StringValue("2ms"));

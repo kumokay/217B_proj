@@ -46,18 +46,14 @@
   ).count()
 #endif
 
-
-
-
-
 #define __APP_LOG(x) do{ std::cout << "APP_LOG: [" << m_appId << "]" << x << std::endl; } while(0)
 
-#if 0
-  #define __APP_LOG_DEV(x) __APP_LOG("[DEV] " << x)
-  #define __APP_LOG_ERROR(x)
-  #define __APP_LOG_WARNING(x)
-  #define __APP_LOG_INFO(x)
-  #define __APP_LOG_DEBUG(x)
+#if __IS_SIMULATION__
+  #define __APP_LOG_DEV(x)
+  #define __APP_LOG_ERROR(x) NS_LOG_DEBUG(x)
+  #define __APP_LOG_WARNING(x) NS_LOG_DEBUG(x)
+  #define __APP_LOG_INFO(x) NS_LOG_DEBUG(x)
+  #define __APP_LOG_DEBUG(x) NS_LOG_DEBUG(x)
   #define __APP_LOG_TRACE(x)
 #else
   #define __APP_LOG_DEV(x)
@@ -67,6 +63,7 @@
   #define __APP_LOG_DEBUG(x) __APP_LOG("[DEBUG] " << x)
   #define __APP_LOG_TRACE(x)
 #endif
+
 #define APP_LOG(__log_type, x)  if(m_log_on) __APP_LOG_##__log_type("[" << m_nodeName <<"][" << GET_CHRONO_TIMESTAMP_MS(0) << "] " << x)
 #define APP_LOG_DELAY(__log_type, x, __delay_ms)  if(m_log_on) __APP_LOG_##__log_type("[" << m_nodeName <<"][" << GET_CHRONO_TIMESTAMP_MS(__delay_ms) << "] " << x)
 
@@ -137,7 +134,7 @@ public:
     m_faceProducer(m_faceConsumer.getIoService()),
     m_scheduler(m_faceConsumer.getIoService())
   {
-
+    
   }
 
   void
@@ -149,6 +146,7 @@ public:
   void
   stat_logging_start(std::string file_path)
   {
+    std::cout << "log file_path=" << file_path << std::endl;
     __STAT_LOG_START(file_path);
     __STAT_LOG_HEADER();
   }

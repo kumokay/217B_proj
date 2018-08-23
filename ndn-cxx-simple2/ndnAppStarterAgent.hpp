@@ -62,6 +62,9 @@ protected:
   virtual void
   StartApplication()
   {
+    string log_folder = "out/log/";
+    if(__IS_SIMULATION__)
+      log_folder = "/home/kumokay/github/ndnSIM/ns-3/src/ndnSIM/examples/my-ndn-simple2-log/";
     // Create an instance of the app
     m_instance.reset(new APPNAME(CLASSID(CLASSNAME), ndn::StackHelper::getKeyChain()));
     m_instance->setLogOn(m_is_log_on);
@@ -69,7 +72,7 @@ protected:
     m_instance->initApp(m_parent_prefix, m_child_prefix, m_exec_time);//, m_child_number);
     m_instance->setInterestFilter(m_prefix);
     m_instance->setInterestFilter("available");
-    m_instance->stat_logging_start("mylog/agent"+ std::to_string(m_agent_id) +".txt");
+    m_instance->stat_logging_start(log_folder + "agent"+ std::to_string(m_agent_id) +".txt");
     m_instance->run();
   }
 

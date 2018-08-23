@@ -47,11 +47,14 @@ protected:
   virtual void
   StartApplication()
   {
+    string log_folder = "out/log/";
+    if(__IS_SIMULATION__)
+      log_folder = "src/ndnSIM/examples/my-ndn-simple2-log/";
     // Create an instance of the app
     m_instance.reset(new APPNAME(CLASSID(CLASSNAME), ndn::StackHelper::getKeyChain()));
     m_instance->setNodeName(m_prefix);
     m_instance->setLogOn(true);
-    m_instance->stat_logging_start("mylog/consumer.txt");
+    m_instance->stat_logging_start(log_folder + "consumer.txt");
 
     // queries for test
     m_instance->scheduleEvent_ExpressInterest("/Agent0/Manager0/install/simTask", 3000);
